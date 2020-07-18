@@ -1,11 +1,8 @@
 package com.accedia.firebaseworkshopapp.ui.login
 
 import android.app.Activity
-import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProviders
+import android.content.Intent
 import android.os.Bundle
-import androidx.annotation.StringRes
-import androidx.appcompat.app.AppCompatActivity
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
@@ -14,8 +11,13 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.ProgressBar
 import android.widget.Toast
-
+import androidx.annotation.StringRes
+import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProviders
+import com.accedia.firebaseworkshopapp.MainActivity
 import com.accedia.firebaseworkshopapp.R
+
 
 class LoginActivity : AppCompatActivity() {
 
@@ -57,12 +59,17 @@ class LoginActivity : AppCompatActivity() {
             }
             if (loginResult.success != null) {
                 updateUiWithUser(loginResult.success)
+                finish()
+                val homepage = Intent(this, MainActivity::class.java)
+                startActivity(homepage)
             }
             setResult(Activity.RESULT_OK)
 
             //Complete and destroy login activity once successful
-            finish()
+            //finish()
         })
+
+        loginViewModel.alreadyLogin()
 
         username.afterTextChanged {
             loginViewModel.loginDataChanged(
@@ -70,6 +77,8 @@ class LoginActivity : AppCompatActivity() {
                 password.text.toString()
             )
         }
+
+        val activity: Activity = this
 
         password.apply {
             afterTextChanged {
@@ -84,7 +93,8 @@ class LoginActivity : AppCompatActivity() {
                     EditorInfo.IME_ACTION_DONE ->
                         loginViewModel.login(
                             username.text.toString(),
-                            password.text.toString()
+                            password.text.toString(),
+                            activity
                         )
                 }
                 false
@@ -92,7 +102,7 @@ class LoginActivity : AppCompatActivity() {
 
             login.setOnClickListener {
                 loading.visibility = View.VISIBLE
-                loginViewModel.login(username.text.toString(), password.text.toString())
+                loginViewModel.login(username.text.toString(), password.text.toString(), activity)
             }
         }
     }

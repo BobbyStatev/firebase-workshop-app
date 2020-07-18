@@ -1,31 +1,51 @@
 package com.accedia.firebaseworkshopapp.ui.login
 
+import android.app.Activity
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import android.util.Patterns
 import com.accedia.firebaseworkshopapp.data.LoginRepository
-import com.accedia.firebaseworkshopapp.data.Result
 
 import com.accedia.firebaseworkshopapp.R
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.ktx.Firebase
 
 class LoginViewModel(private val loginRepository: LoginRepository) : ViewModel() {
 
+    private lateinit var auth: FirebaseAuth
     private val _loginForm = MutableLiveData<LoginFormState>()
     val loginFormState: LiveData<LoginFormState> = _loginForm
 
     private val _loginResult = MutableLiveData<LoginResult>()
     val loginResult: LiveData<LoginResult> = _loginResult
 
-    fun login(username: String, password: String) {
-        // can be launched in a separate asynchronous job
-        val result = loginRepository.login(username, password)
+    fun login(username: String, password: String, activity: Activity) {
+        auth = Firebase.auth
+        auth.signInWithEmailAndPassword(username, password)
+            .addOnCompleteListener(activity) { task ->
+                if (task.isSuccessful) {
+                    // Sign in success, update UI with the signed-in user's information
+                    alreadyLogin()
+                } else {
+                    _loginResult.value = LoginResult(error = R.string.login_failed)
+                }
+            }
+    }
 
-        if (result is Result.Success) {
+    fun alreadyLogin() {
+        auth = Firebase.auth
+        var email:String? = null
+        val user = auth.currentUser
+        user?.let {
+            // Name, email address, and profile photo Url
+            email = user.email
+        }
+        if (email != null) {
             _loginResult.value =
-                LoginResult(success = LoggedInUserView(displayName = result.data.displayName))
-        } else {
-            _loginResult.value = LoginResult(error = R.string.login_failed)
+                LoginResult(success = LoggedInUserView(displayName = email!!))
         }
     }
 
